@@ -1,12 +1,17 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import React, {useEffect, useState} from 'react';
-import {Dimensions, SafeAreaView, StyleSheet} from 'react-native';
+import {
+  Dimensions,
+  PermissionsAndroid,
+  Platform,
+  SafeAreaView,
+} from 'react-native';
 
-import {HomeScreen, SettingsScreen} from './screens';
 import {NavigationContainer} from '@react-navigation/native';
 import {TrackingConfig, TrackingContext} from './contexts/TrackingContext';
-import { DEFAULT_TIME_FREQUENCY, MAX_TRACKING_TIME } from './utils/constant';
-import { NotificationService } from './services/NotificationService';
+import {HomeScreen, SettingsScreen} from './screens';
+import {NotificationService} from './services/NotificationService';
+import {DEFAULT_TIME_FREQUENCY, MAX_TRACKING_TIME} from './utils/constant';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,6 +26,15 @@ function App(): React.JSX.Element {
   const value = {trackingConfig, setTrackingConfig};
 
   useEffect(() => {
+    if (Platform.OS === 'android') {
+      (async () => {
+        await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+        );
+        NotificationService.checkPermissions();
+        NotificationService.createChannel();
+      })();
+    }
     NotificationService.init();
   }, []);
 
