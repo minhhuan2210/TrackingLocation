@@ -5,6 +5,7 @@ import {
   Image,
   Linking,
   Pressable,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -86,7 +87,7 @@ const HomeScreen = () => {
 
       id.current = setTimeout(() => {
         sendNotification();
-      }, 10 * 1000);
+      }, trackingConfig.maxStopMovingTime);
     }
   }, [data.length]);
 
@@ -112,7 +113,26 @@ const HomeScreen = () => {
     Linking.openURL(url);
   };
 
-  const renderItem = ({item}: {item: LocationInfo}) => {
+  const editItem = (item: LocationInfo) => {};
+
+  const shareItem = async (item: LocationInfo) => {
+    try {
+      await Share.share({
+        title: 'Sharing location',
+        message: `latitude: ${item.latitude},longitude: ${item.longitude}`,
+      });
+    } catch (error: any) {
+      console.log(error);
+    }
+  };
+
+  const deleteItem = (index: number) => {
+    const arr = [...data];
+    arr.splice(index, 1);
+    setData(arr);
+  };
+
+  const renderItem = ({item, index}: {item: LocationInfo; index: number}) => {
     return (
       <View style={styles.itemContainer} key={'item.id'}>
         <View style={styles.info}>
@@ -125,14 +145,23 @@ const HomeScreen = () => {
           </Pressable>
         </View>
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionItem} hitSlop={40}>
+          <TouchableOpacity
+            style={styles.actionItem}
+            hitSlop={40}
+            onPress={() => editItem(item)}>
             <Text style={styles.actionText}>Edit</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} hitSlop={40}>
+          <TouchableOpacity
+            style={styles.actionItem}
+            hitSlop={40}
+            onPress={() => shareItem(item)}>
             <Text style={styles.actionText}>Share</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionItem} hitSlop={40}>
-            <Text style={[styles.actionText,{color: 'red'}]}>Delete</Text>
+          <TouchableOpacity
+            style={styles.actionItem}
+            hitSlop={40}
+            onPress={() => deleteItem(index)}>
+            <Text style={[styles.actionText, {color: 'red'}]}>Delete</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -149,17 +178,17 @@ const HomeScreen = () => {
     sentNotification.current = true;
   };
 
-  console.log('first');
-
   const activeTrackingLocation = () => {
     requestLocationPermission();
 
     if (!isDisabled) {
-      // const id = setInterval(() => {
-        getCurrentLocation();
-      // }, trackingConfig.timeFrequency);
+      getCurrentLocation();
 
-      // NotificationService.saveIntervalId(id);
+      const id = setInterval(() => {
+        getCurrentLocation();
+      }, trackingConfig.timeFrequency);
+
+      NotificationService.saveIntervalId(id);
     }
   };
 
@@ -226,11 +255,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#ffffff'
+    backgroundColor: '#ffffff',
   },
   actionText: {
     fontWeight: 'bold',
-    color: '#fa8825'
+    color: '#fa8825',
   },
   errorText: {
     position: 'absolute',

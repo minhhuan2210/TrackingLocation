@@ -18,7 +18,7 @@ export default function TrackLocationButton(props: TrackLocationButtonProps) {
           {backgroundColor: disabled ? '#c0a171' : '#fa8825'},
         ]}
         onPress={onPress}
-        disabled={disabled}>
+        disabled={disabled} hitSlop={40}>
         <Text style={styles.emptyTextAction}>{text}</Text>
       </TouchableOpacity>
     </View>

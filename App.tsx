@@ -2,10 +2,10 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import React, {useEffect, useState} from 'react';
 import {Dimensions, SafeAreaView, StyleSheet} from 'react-native';
 
-import {Home, SettingsScreen} from './screens';
+import {HomeScreen, SettingsScreen} from './screens';
 import {NavigationContainer} from '@react-navigation/native';
 import {TrackingConfig, TrackingContext} from './contexts/TrackingContext';
-import { DEFAULT_TIME_FREQUENCY } from './utils/constant';
+import { DEFAULT_TIME_FREQUENCY, MAX_TRACKING_TIME } from './utils/constant';
 import { NotificationService } from './services/NotificationService';
 
 const Tab = createBottomTabNavigator();
@@ -20,6 +20,7 @@ function App(): React.JSX.Element {
   const [trackingConfig, setTrackingConfig] = useState<TrackingConfig>({
     isEnabledNotification: true,
     timeFrequency: DEFAULT_TIME_FREQUENCY,
+    maxStopMovingTime: MAX_TRACKING_TIME,
   });
   const value = {trackingConfig, setTrackingConfig};
 
@@ -36,9 +37,8 @@ function App(): React.JSX.Element {
               tabBarLabelPosition: 'beside-icon',
               tabBarActiveBackgroundColor: '#4d5461',
               headerShown: false,
-              unmountOnBlur: true,
             }}>
-            <Tab.Screen name="Home" component={Home} />
+            <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
           </Tab.Navigator>
         </NavigationContainer>

@@ -16,10 +16,12 @@ import {SectionSeparator} from '../modules/common-components';
 export const SettingsScreen = () => {
   const [timeFrequency, setTimeFrequency] = useState(DEFAULT_TIME_FREQUENCY);
   const [maxStopMovingTime, setMaxStopMovingTime] = useState(MAX_TRACKING_TIME);
-  const [isDisabledApplyButton, setDisabledApplyButton] = useState(false);
-  // const [isDisabledApplyButton, setDisabledApplyButton] = useState(false);
 
-  console.log('???????')
+  const [disabledApplyButton, setDisabledApplyButton] = useState(false);
+  const [
+    disabledApplyMaxStopMovingButton,
+    setDisabledApplyMaxStopMovingButton,
+  ] = useState(false);
 
   const {trackingConfig, setTrackingConfig} = useTrackingConfig();
 
@@ -34,7 +36,7 @@ export const SettingsScreen = () => {
     const number = Number(input);
     setTimeFrequency(number);
 
-    if (isNaN(number) || number > MAX_TRACKING_TIME || number < 1000) {
+    if (isNaN(number) || number > MAX_TRACKING_TIME || number < 1000 || number > maxStopMovingTime) {
       setDisabledApplyButton(true);
       return;
     }
@@ -45,11 +47,11 @@ export const SettingsScreen = () => {
     const number = Number(input);
     setMaxStopMovingTime(number);
 
-    if (isNaN(number) || number < 1000) {
-      setDisabledApplyButton(true);
+    if (isNaN(number) || number < 1000 || number < timeFrequency ) {
+      setDisabledApplyMaxStopMovingButton(true);
       return;
     }
-    setDisabledApplyButton(false);
+    setDisabledApplyMaxStopMovingButton(false);
   };
 
   const applyTimeFrequency = () => {
@@ -60,6 +62,15 @@ export const SettingsScreen = () => {
     setDisabledApplyButton(true);
     Keyboard.dismiss();
   };
+  
+  const applyMaxStopMovingTime = () => {
+    setTrackingConfig(prev => ({
+      ...prev,
+      maxStopMovingTime,
+    }));
+    setDisabledApplyMaxStopMovingButton(true);
+    Keyboard.dismiss();
+  };
 
   const resetToDefault = () => {
     setTimeFrequency(DEFAULT_TIME_FREQUENCY);
@@ -67,7 +78,10 @@ export const SettingsScreen = () => {
     setTrackingConfig({
       isEnabledNotification: true,
       timeFrequency: DEFAULT_TIME_FREQUENCY,
+      maxStopMovingTime: MAX_TRACKING_TIME,
     });
+    setDisabledApplyButton(false);
+    setDisabledApplyMaxStopMovingButton(false);
   };
 
   return (
@@ -88,7 +102,7 @@ export const SettingsScreen = () => {
         <SectionSeparator />
         <View style={styles.settingTile}>
           <Text>{'Time frequency \n(in ms)'}</Text>
-          <View style={styles.timeFrequencyContainer}>
+          <View style={styles.updatingTimeContainer}>
             <TextInput
               style={styles.timeInput}
               keyboardType="number-pad"
@@ -99,13 +113,11 @@ export const SettingsScreen = () => {
               style={[
                 styles.applyTimeButton,
                 {
-                  backgroundColor: isDisabledApplyButton
-                    ? '#c0a171'
-                    : '#fa8825',
+                  backgroundColor: disabledApplyButton ? '#c0a171' : '#fa8825',
                 },
               ]}
               onPress={applyTimeFrequency}
-              disabled={isDisabledApplyButton}>
+              disabled={disabledApplyButton}>
               <Text style={styles.applyText}>Apply</Text>
             </TouchableOpacity>
           </View>
@@ -113,7 +125,7 @@ export const SettingsScreen = () => {
         <SectionSeparator />
         <View style={styles.settingTile}>
           <Text>{'Maximum stop \nmoving time (in ms)'}</Text>
-          <View style={styles.timeFrequencyContainer}>
+          <View style={styles.updatingTimeContainer}>
             <TextInput
               style={styles.timeInput}
               keyboardType="number-pad"
@@ -124,13 +136,13 @@ export const SettingsScreen = () => {
               style={[
                 styles.applyTimeButton,
                 {
-                  backgroundColor: isDisabledApplyButton
-                    ? '#3e444e'
+                  backgroundColor: disabledApplyMaxStopMovingButton
+                    ? '#c0a171'
                     : '#fa8825',
                 },
               ]}
-              onPress={applyTimeFrequency}
-              disabled={isDisabledApplyButton}>
+              onPress={applyMaxStopMovingTime}
+              disabled={disabledApplyMaxStopMovingButton}>
               <Text style={styles.applyText}>Apply</Text>
             </TouchableOpacity>
           </View>
@@ -187,7 +199,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
   },
-  timeFrequencyContainer: {
+  updatingTimeContainer: {
     flex: 1,
     flexDirection: 'row',
     justifyContent: 'flex-end',

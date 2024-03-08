@@ -3,6 +3,7 @@ import {createContext} from 'react';
 export type TrackingConfig = {
   isEnabledNotification: boolean;
   timeFrequency: number;
+  maxStopMovingTime: number;
 };
 
 type Context = {
