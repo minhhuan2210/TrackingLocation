@@ -1,68 +1,20 @@
-import Geolocation from '@react-native-community/geolocation';
 import React, {useEffect, useRef, useState} from 'react';
-import {
-  FlatList,
-  Image,
-  Linking,
-  Pressable,
-  Share,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import PushNotification from 'react-native-push-notification';
-import {IconMap} from '../assets';
+import {FlatList, StyleSheet, Text, View} from 'react-native';
+import {LocationInfo, Position} from 'types';
+import {Button} from '../common-components';
 import {useTrackingConfig} from '../hooks/useTrackingConfig';
-import {TrackLocationButton} from '../modules/track-location';
+import {LocationItem} from '../modules/track-location';
+import {LocationService} from '../services/LocationService';
 import {NotificationService} from '../services/NotificationService';
-
-type LocationInfo = {
-  latitude: number;
-  longitude: number;
-};
-
-type Position = {
-  coords: {
-    latitude: number;
-    longitude: number;
-    altitude: number | null;
-    accuracy: number;
-    altitudeAccuracy: number | null;
-    heading: number | null;
-    speed: number | null;
-  };
-  timestamp: number;
-};
-
-type Error = {
-  code: number;
-  message: string;
-  PERMISSION_DENIED: number;
-  POSITION_UNAVAILABLE: number;
-  TIMEOUT: number;
-};
 
 const HomeScreen = () => {
   const [isDisabled, setIsDisabled] = useState(false);
   const [data, setData] = useState<LocationInfo[]>([]);
 
   const sentNotification = useRef<boolean>(false);
-  const id = useRef<NodeJS.Timeout | number>(0);
+  const timeoutId = useRef<NodeJS.Timeout | number>(0);
 
   const {trackingConfig} = useTrackingConfig();
-
-  const requestLocationPermission = () => {
-    Geolocation.requestAuthorization(
-      (success: any) => {
-        console.log('success', success);
-      },
-      (error: Error) => {
-        console.log('error happened', JSON.stringify(error, null, 2));
-        if (error.PERMISSION_DENIED === 1) setIsDisabled(true);
-      },
-    );
-  };
 
   useEffect(() => {
     if (data.length > 1) {
@@ -73,57 +25,27 @@ const HomeScreen = () => {
         currentLocation.latitude !== lastLocation.latitude ||
         currentLocation.longitude !== lastLocation.longitude
       ) {
-        clearTimeout(id.current);
+        clearTimeout(timeoutId.current);
         return;
       }
 
       if (
-        id.current ||
+        timeoutId.current ||
         sentNotification.current ||
         !trackingConfig.isEnabledNotification
       ) {
         return;
       }
 
-      id.current = setTimeout(() => {
+      timeoutId.current = setTimeout(() => {
         sendNotification();
       }, trackingConfig.maxStopMovingTime);
     }
   }, [data.length]);
 
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      (position: Position) => {
-        const {latitude, longitude} = position.coords;
-        setData(prev => [{latitude, longitude}, ...prev]);
-      },
-      (error: Error) => {
-        console.log('error happened', JSON.stringify(error, null, 2));
-      },
-      {
-        timeout: 15000,
-        maximumAge: 10000,
-        enableHighAccuracy: true,
-      },
-    );
-  };
-
-  const openGoogleMap = (item: LocationInfo) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`;
-    Linking.openURL(url);
-  };
-
-  const editItem = (item: LocationInfo) => {};
-
-  const shareItem = async (item: LocationInfo) => {
-    try {
-      await Share.share({
-        title: 'Sharing location',
-        message: `latitude: ${item.latitude},longitude: ${item.longitude}`,
-      });
-    } catch (error: any) {
-      console.log(error);
-    }
+  const getLocationSuccessCallback = (position: Position) => {
+    const {latitude, longitude} = position.coords;
+    setData(prev => [{latitude, longitude}, ...prev]);
   };
 
   const deleteItem = (index: number) => {
@@ -134,42 +56,12 @@ const HomeScreen = () => {
 
   const renderItem = ({item, index}: {item: LocationInfo; index: number}) => {
     return (
-      <View style={styles.itemContainer} key={'item.id'}>
-        <View style={styles.info}>
-          <View>
-            <Text style={styles.itemText}>latitude: {item.latitude}</Text>
-            <Text style={styles.itemText}>longitude: {item.longitude}</Text>
-          </View>
-          <Pressable hitSlop={40} onPress={() => openGoogleMap(item)}>
-            <Image style={styles.image} source={IconMap}></Image>
-          </Pressable>
-        </View>
-        <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionItem}
-            hitSlop={40}
-            onPress={() => editItem(item)}>
-            <Text style={styles.actionText}>Edit</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionItem}
-            hitSlop={40}
-            onPress={() => shareItem(item)}>
-            <Text style={styles.actionText}>Share</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.actionItem}
-            hitSlop={40}
-            onPress={() => deleteItem(index)}>
-            <Text style={[styles.actionText, {color: 'red'}]}>Delete</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <LocationItem item={item} deleteCallback={() => deleteItem(index)} />
     );
   };
 
   const sendNotification = () => {
-    PushNotification.localNotification({
+    NotificationService.sendNotification({
       title: 'Stop Moving Detected',
       message:
         "Hey, it's seems that you're stop moving. \n" +
@@ -179,13 +71,15 @@ const HomeScreen = () => {
   };
 
   const activeTrackingLocation = () => {
-    requestLocationPermission();
+    LocationService.requestAuthorization(...Array(1), () =>
+      setIsDisabled(true),
+    );
 
     if (!isDisabled) {
-      getCurrentLocation();
+      LocationService.getCurrentLocation(getLocationSuccessCallback);
 
       const id = setInterval(() => {
-        getCurrentLocation();
+        LocationService.getCurrentLocation(getLocationSuccessCallback);
       }, trackingConfig.timeFrequency);
 
       NotificationService.saveIntervalId(id);
@@ -196,7 +90,7 @@ const HomeScreen = () => {
     <View style={styles.container}>
       {data.length === 0 ? (
         <>
-          <TrackLocationButton
+          <Button
             onPress={activeTrackingLocation}
             text={'Start tracking location'}
             disabled={isDisabled}
@@ -221,45 +115,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#b4bbb4',
-  },
-  itemContainer: {
-    borderWidth: 2,
-    borderColor: '#fa8825',
-    borderRadius: 8,
-    marginVertical: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    justifyContent: 'space-between',
-    backgroundColor: '#4d5461',
-  },
-  itemText: {
-    fontSize: 20,
-    color: '#ffffff',
-  },
-  info: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  image: {
-    height: 40,
-    width: 40,
-    marginRight: 20,
-  },
-  actions: {
-    flexDirection: 'row',
-    marginTop: 30,
-  },
-  actionItem: {
-    flex: 1,
-    height: 30,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-  },
-  actionText: {
-    fontWeight: 'bold',
-    color: '#fa8825',
   },
   errorText: {
     position: 'absolute',

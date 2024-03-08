@@ -13,16 +13,16 @@ const Tab = createBottomTabNavigator();
 function App(): React.JSX.Element {
   const height = Dimensions.get('window').height;
 
-  useEffect(() => {
-    NotificationService.init();
-  }, []);
-
   const [trackingConfig, setTrackingConfig] = useState<TrackingConfig>({
     isEnabledNotification: true,
     timeFrequency: DEFAULT_TIME_FREQUENCY,
     maxStopMovingTime: MAX_TRACKING_TIME,
   });
   const value = {trackingConfig, setTrackingConfig};
+
+  useEffect(() => {
+    NotificationService.init();
+  }, []);
 
   return (
     <SafeAreaView style={{height, backgroundColor: '#b4bbb4'}}>
@@ -46,7 +46,5 @@ function App(): React.JSX.Element {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({});
 
 export default App;

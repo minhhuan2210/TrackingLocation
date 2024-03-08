@@ -1,5 +1,6 @@
 import PushNotificationIOS from '@react-native-community/push-notification-ios';
 import PushNotification from 'react-native-push-notification';
+import { Notification } from 'types';
 
 class NotificationController {
   private _intervalId: NodeJS.Timeout | undefined;
@@ -9,9 +10,9 @@ class NotificationController {
       onNotification: function (notification) {
         console.log('NOTIFICATION:', notification);
         notification.finish(PushNotificationIOS.FetchResult.NoData);
-        
+
         const id = NotificationService.getIntervalId();
-        if(notification.userInteraction && id) clearInterval(id);
+        if (notification.userInteraction && id) clearInterval(id);
       },
       permissions: {
         alert: true,
@@ -26,9 +27,19 @@ class NotificationController {
   private getIntervalId(): NodeJS.Timeout | undefined {
     return this._intervalId;
   }
-  
+
   public saveIntervalId(id: NodeJS.Timeout): void {
     this._intervalId = id;
+  }
+
+  public sendNotification({
+    title,
+    message,
+  }: Notification): void {
+    PushNotification.localNotification({
+      title,
+      message,
+    });
   }
 }
 

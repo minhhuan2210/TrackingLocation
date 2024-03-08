@@ -1,44 +1,51 @@
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 
-type TrackLocationButtonProps = {
+type ButtonProps = {
   disabled?: boolean;
   onPress: () => void;
   text: string;
+  style?: Record<string, any>;
 };
 
-export default function TrackLocationButton(props: TrackLocationButtonProps) {
-  const {onPress, text, disabled} = props;
+export default function Button(props: ButtonProps) {
+  const {onPress, text, disabled, style} = props;
+
+  const _onPress = () => {
+    onPress();
+  };
 
   return (
-    <View style={styles.emptyCompContainer}>
+    <View style={styles.container}>
       <TouchableOpacity
         style={[
-          styles.emptyActionButton,
+          styles.button,
           {backgroundColor: disabled ? '#c0a171' : '#fa8825'},
+          style,
         ]}
-        onPress={onPress}
-        disabled={disabled} hitSlop={40}>
-        <Text style={styles.emptyTextAction}>{text}</Text>
+        onPress={_onPress}
+        disabled={disabled}
+        hitSlop={40}>
+        <Text style={styles.text}>{text}</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  emptyCompContainer: {
+  container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyActionButton: {
+  button: {
     borderRadius: 8,
     height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 10,
   },
-  emptyTextAction: {
+  text: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',

@@ -11,7 +11,7 @@ import {
 import React, {useState} from 'react';
 import {useTrackingConfig} from '../hooks/useTrackingConfig';
 import {DEFAULT_TIME_FREQUENCY, MAX_TRACKING_TIME} from '../utils/constant';
-import {SectionSeparator} from '../modules/common-components';
+import { SectionSeparator } from '../common-components';
 
 export const SettingsScreen = () => {
   const [timeFrequency, setTimeFrequency] = useState(DEFAULT_TIME_FREQUENCY);

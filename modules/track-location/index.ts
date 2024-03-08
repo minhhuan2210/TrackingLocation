@@ -1,3 +1,3 @@
-import TrackLocationButton from './TrackLocationButton';
+import LocationItem from './LocationItem';
 
-export {TrackLocationButton};
+export {LocationItem};
